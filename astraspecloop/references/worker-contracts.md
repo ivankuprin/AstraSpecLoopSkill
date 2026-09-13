@@ -32,9 +32,21 @@ Within the common headings, include relevant instructions, locations (path, symb
 Edit only assigned areas. Flag conflicting changes or required scope expansion. Return requirement-to-change mapping, changed paths/symbols, state evidence, check outcomes, risks, and unresolved work. Builder follow-ups finish assigned implementation; review-discovered repairs belong to the reviewer that found the issue.
 
 ## Reviewer
+ 
+For concurrent writers, apply the worktree contract below before dispatch. Ordinary sequential work stays in the existing checkout.
 
 Start with a fresh context, never the implementer's. Inspect ALL active changes and adjacent contracts, the original request, spec completeness, and evidence on disk. Follow the lead's task-specific risk focus without inventing requirements. Initially project files are read-only; only the report may be written. After Astra assigns confirmed findings back to this same reviewer, it becomes the repairer and may modify the assigned code/tests and run checks. Preserve unrelated user changes; flag repairs outside authorization.
 
 Mark each requirement/criterion PASS, FAIL, or BLOCKED. Return stable finding IDs, severity, evidence with code pointers, remedy, closing verification, and reviewed-state evidence. Assess closure independently. Flag stale checks, integration gaps, and unjustified spec exclusions. Do not duplicate valid checks; request missing verification through the lead.
 
 After fixing, return a repair report and stop. A NEW reviewer must assess all active changes; the repairing reviewer cannot certify its own fixes as the final independent verdict. Final clean review explicitly states no actionable findings and readiness within the agreed scope, with check evidence and residual uncertainty; it is not a guarantee of zero production defects.
+
+## Parallel-write worktrees
+
+Use separate Git worktrees only when tasks justify concurrent project edits, including concurrent repairs. Luna inspects repository state and prepares one unique worktree and branch per writer (default branch prefix `codex/`), with a common verified starting state. Preserve dirty and untracked user changes; do not silently start from HEAD when required input exists only in the working tree. If reproducing the intended baseline is unsafe, Git is unavailable, or worktree setup is unavailable, use sequential execution.
+
+Each brief names the assigned absolute worktree path, baseline, owned files, shared interfaces, and unique report path accessible to Astra. Workers write only in their assigned checkout and report location; never switch another worker's branch. Keep one lead-owned authoritative cycle state. Worktrees are separate checkouts, not security sandboxes: shared databases, ports, generated outputs outside the checkout, and services still require coordination or serialized commands.
+
+After writers finish, assign a Luna to integrate their changes into the designated result checkout, preserve unrelated changes, resolve conflicts, and run the complete required gate on the combined state. Integration can use scoped patches; do not create commits or merges without authorization. Independent review must cover all active integrated changes, not isolated worker branches. Repairs target that integrated state; repeat isolation only if further concurrent writes are justified. Report result checkout and fingerprints to Astra without source or diffs.
+
+Do not remove worktrees with unintegrated or uncommitted work. Retain them and report their paths unless cleanup is authorized and Luna verifies all intended changes are preserved.

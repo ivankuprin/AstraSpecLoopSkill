@@ -1,6 +1,6 @@
 # AstraSpecLoopSkill
 
-Current version: **1.2.1**.
+Current version: **1.2.2**.
 
 A bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR workflow for Codex. **Astra Low is exclusively the team lead; Luna xHigh performs all project code work.**
 
@@ -24,6 +24,10 @@ Select Astra Low for the calling task; the skill cannot switch it automatically.
 There are at most three cumulative repair rounds, with earlier stopping for oscillation or repeated attempts without progress. A successful third round still passes. Writers stop during final checks and review; stale evidence must be revalidated.
 
 ## Reports and state
+ 
+When concurrent edits are worthwhile, Luna prepares a separate Git worktree and branch for each writer. Sequential work and read-only review do not require extra worktrees. Luna preserves the intended baseline, including relevant uncommitted changes; unsafe or unavailable isolation falls back to sequential work. Worktrees do not isolate shared databases or services.
+
+After parallel work, a Luna integrates changes into the designated result checkout and runs the combined required gate. Fresh review covers the integrated changes. Commits, merges, and cleanup retain their authorization requirements; unintegrated work is preserved.
 
 Luna reports use compact Markdown, normally 2–4 KB, with five fixed sections: **Result, Facts, Checks, Risks, Decision needed**. Reports contain conclusions and evidence pointers, never code excerpts, diffs, or raw logs.
 

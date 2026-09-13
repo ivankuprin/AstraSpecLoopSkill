@@ -2,7 +2,7 @@
 name: astraspecloop
 description: "Astra Low coordinates solely from Luna xHigh reports; Luna reads, implements, reviews, and repairs code in a bounded SpecLoop. Use for AstraSpecLoop or this division of roles."
 metadata:
-  version: "1.2.1"
+  version: "1.2.2"
   short-description: "Astra Low leads; Luna xHigh builds and reviews"
 ---
 
@@ -32,6 +32,8 @@ Use conservative non-material assumptions; ask for material missing decisions. P
 If the user requested only a plan, deliver that plan and stop; do not implement or claim an implementation PASS.
 
 Assign tasks with dependencies, file ownership, acceptance checks, and shared interface contracts. Batch small related work. Parallelize only independent changes with compatible contracts and disjoint write ownership; serialize shared edits and delegate integration checks.
+
+When concurrent project writes are actually worthwhile, delegate separate Git worktree setup to Luna for each writer; follow the worktree contract in the worker reference. Sequential work and read-only review need no extra worktree. If isolation or integration cannot be established safely, serialize the work instead.
 
 ## BUILD
 
