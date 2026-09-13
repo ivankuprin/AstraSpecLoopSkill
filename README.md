@@ -1,21 +1,35 @@
 # AstraSpecLoopSkill
 
-Current version: **1.1.0**.
+Current version: **1.2.0**.
 
-The core skill is 692 words, down from 1,501 in v1.0.1. Worker contracts and resume/repair details live in references loaded when needed. This reduces entrypoint instructions, not a measured percentage of task token costs.
-
-Version 1.1.0 reuses implementation workers for related repairs, gives independent reviewers the original request to check specification completeness, defines shared contracts before parallel work, and ties reports to project state. Final verification and review run after writers finish.
-
-`AstraSpecLoop` is a bounded `DISCOVER → SPEC → BUILD → REVIEW → REPAIR` workflow for Codex. Astra Low acts as the technical lead, while Luna Max handles repository research, implementation, repairs, and independent review.
-
-The lead receives a compact JSON map from the research worker, studies only the relevant code, writes the specification, and decomposes the work. Luna workers then make the code and test changes. Astra evaluates the evidence, routes repairs, and accepts the final result only when the required checks pass.
+A bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR workflow for Codex. **Astra Low is exclusively the team lead; Luna High performs all project code work.**
 
 ## Roles
 
-- **Astra Low (`gpt-6-astra`, low reasoning):** scope, targeted inspection, specification, task decomposition, dispatch, triage, and final acceptance.
-- **Luna Max (`gpt-5.6-luna`, max reasoning):** discovery, implementation, tests, repairs, and fresh read-only review.
+- **Astra Low (`gpt-6-astra`, low reasoning):** reads compact worker reports, plans, divides tasks, dispatches workers, and decides from reported evidence. It does not search, read, or write project code, tests, diffs, configuration, or raw logs.
+- **Luna High (`gpt-5.6-luna`, high reasoning):** researches, reads and writes code, runs checks, computes fingerprints, reviews changes, and repairs findings.
 
-The skill does not silently change the model of the calling task. Select Astra Low for the main Codex task. The skill explicitly requests Luna Max for worker agents; if the host cannot provide those settings, the workflow reports `ASTRASPECLOOP BLOCKED` instead of substituting another model.
+Astra may read required host/skill instructions and maintain its own plans and workflow records. Code pointers in reports are for subsequent Luna tasks, not for Astra to open.
+
+Select Astra Low for the calling task; the skill cannot switch it automatically. Every new worker explicitly requests Luna High with `fork_turns: "none"`. Missing required capabilities produce BLOCKED rather than silent model substitution.
+
+## Workflow
+
+1. **DISCOVER:** Luna explores the repository and reports behavior, locations, constraints, risks, and verification options.
+2. **SPEC:** Astra plans exclusively from reports. Missing information triggers a focused Luna follow-up. A request for a plan only stops at the plan.
+3. **BUILD:** Luna workers implement coherent subtasks and run relevant checks. Astra can batch small tasks or coordinate independent tasks with compatible interfaces and disjoint write ownership.
+4. **REVIEW:** a fresh Luna reviews all active changes against the original request and specification, focusing on relevant risks such as races, transactions, validation, and error handling.
+5. **REPAIR:** the reviewer that found the problem fixes it after Astra assigns the confirmed findings. A new Luna with no inherited context then reviews all active changes. The repairing reviewer cannot provide final independent acceptance of its own edits.
+
+There are at most three cumulative repair rounds, with earlier stopping for oscillation or repeated attempts without progress. A successful third round still passes. Writers stop during final checks and review; stale evidence must be revalidated.
+
+## Reports and state
+
+Luna reports use compact Markdown, normally 2–4 KB, with five fixed sections: **Result, Facts, Checks, Risks, Decision needed**. Reports contain conclusions and evidence pointers, never code excerpts, diffs, or raw logs.
+
+The plan lives in `specs/<task-slug>.md`; worker reports and the authoritative `state.json` live in `specs/<task-slug>/`, unless repository rules require another location. JSON is only for cycle state: phase, counters, findings, fingerprints, results, and report pointers. Astra updates it from Luna reports after each phase and round. Existing history and counters survive resume.
+
+Detailed worker contracts and repair/resume rules are separate references loaded when needed. No measured token-saving percentage or guarantee of defect-free production behavior is claimed.
 
 ## Install in Codex
 
@@ -31,35 +45,23 @@ Restart Codex after installation so the skill is discovered.
 
 ## Use
 
-Choose Astra Low in the task and invoke the skill explicitly:
+Choose Astra Low and invoke:
 
 ```text
 Use $astraspecloop to implement this feature through verified review and repair.
 ```
 
-Or:
+For a plan without implementation:
 
 ```text
-Use $astraspecloop to fix this bug until every required check passes or progress is blocked.
+Use $astraspecloop to research and write an implementation plan for this feature.
 ```
-
-## Workflow
-
-1. **DISCOVER:** a read-only Luna worker searches the repository and writes a focused JSON report with relevant files, symbols, checks, risks, and unknowns.
-2. **SPEC:** Astra validates the report against the code, records the specification, and splits the work into coherent subtasks.
-3. **BUILD:** Luna workers implement the assigned subtasks and run affected checks.
-4. **REVIEW:** a fresh Luna worker inspects the actual diff and evidence independently.
-5. **REPAIR:** Astra triages findings and dispatches Luna workers for bounded repair rounds.
-
-The workflow preserves a task record under `specs/<task-slug>.md`, keeps repair limits cumulative across resumed sessions, and avoids copying large source files or logs into the lead context.
-
-The lead saves state after every phase and repair round. Discovery and review workers may write only their assigned report; with a fully read-only filesystem, they return JSON for the lead to save. One repair round includes the finding set, its fixes, verification, and the next independent review, regardless of worker count. Interrupted rounds resume without consuming another round, and a successful third round still returns PASS.
 
 ## Verdicts
 
-The final response starts with exactly one of:
+Implementation runs finish with:
 
-- `ASTRASPECLOOP PASS` — all requirements, acceptance criteria, and required checks pass on the current state.
-- `ASTRASPECLOOP BLOCKED` — a material decision, capability, authorization, required check, or unresolved finding prevents verified completion.
+- `ASTRASPECLOOP PASS`: all requirements, criteria, and required checks pass on the current state, with a clean fresh review and no unresolved blocker.
+- `ASTRASPECLOOP BLOCKED`: decisions, capabilities, authorization, checks, or unresolved findings prevent verified completion.
 
-The skill never commits, pushes, merges, deploys, publishes, or performs destructive actions without authorization.
+Plan-only requests deliver the plan without claiming implementation PASS. Commits, pushes, merges, deployment, publishing, and destructive/external actions require authorization.

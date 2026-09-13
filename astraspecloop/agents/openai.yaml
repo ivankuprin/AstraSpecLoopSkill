@@ -1,4 +1,4 @@
 interface:
   display_name: "AstraSpecLoop"
-  short_description: "Astra Low leads; Luna Max builds and reviews"
-  default_prompt: "Use $astraspecloop to implement this task with Astra Low as lead and Luna Max as research, build, and review workers."
+  short_description: "Astra Low leads; Luna High builds and reviews"
+  default_prompt: "Use $astraspecloop to implement this task with Astra Low as lead and Luna High as research, build, and review workers."
