@@ -2,6 +2,7 @@
 name: astraspecloop
 description: "AstraSpecLoop: bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR with Astra Low as lead and Luna Max research, implementation, and review workers. Use when the user requests AstraSpecLoop or this division of agent roles."
 metadata:
+  version: "1.0.1"
   short-description: "Astra Low leads; Luna Max builds and reviews"
 ---
 
@@ -24,6 +25,8 @@ User, repository, host, and safety instructions override this skill. Preserve un
 
 Default record: `specs/<task-slug>.md`, containing `SPEC`, `EVIDENCE`, `REVIEW`, and `LOOP`. Store machine-readable worker reports beside it under `specs/<task-slug>/`; use another repository-approved location when required. Records contain the baseline revision, relevant project-state and spec fingerprints, check plan, phase, cumulative repair count, per-finding attempts/outcomes, and result paths. Avoid unrelated generated artifacts.
 
+After every phase and repair round, the lead persists the phase, spec and relevant project-state fingerprints, baseline revision, check plan and results, cumulative repair count, per-finding attempts/outcomes, and report paths before advancing. Record pending work before a pause or handoff; never mark unfinished checks as passed.
+
 On resume, compare spec, relevant working-tree state, and required-check plan against the record. Invalidate stale evidence and reviews. Repair limits remain cumulative across sessions. Strict mode uses separate spec/evidence/review/loop files and fingerprints covering the baseline, spec, relevant diff, and required-check plan; independent reviewer context is mandatory.
 
 ## 1. DISCOVER — Luna maps the code
@@ -31,6 +34,8 @@ On resume, compare spec, relevant working-tree state, and required-check plan ag
 The lead only locates the root, reads applicable top-level instructions, and establishes task scope before dispatch. Delegate primary repository exploration to one read-only Luna worker. Do not first load broad code trees, full manifests, logs, or large diffs into the lead context.
 
 Ask Luna to locate implementation entry points, relevant symbols and callers, tests, manifests/CI check commands, existing changes, and uncertainty. Luna saves a valid JSON report and returns its path plus a short summary. The structure below is a starting point: omit irrelevant fields and add task-specific fields when useful.
+
+For discovery and review workers, read-only means no changes to project code, tests, configuration, the shared specification, or loop records. The lead explicitly assigns a unique report path under the task's report directory; the worker may create or update only its own report there. If the host enforces a fully read-only filesystem, return the compact JSON directly and let the lead save it.
 
 ```json
 {
@@ -81,7 +86,9 @@ Return compact JSON containing requirement statuses and findings with stable ID,
 
 Assign confirmed findings and their direct consequences to Luna workers, preserving file ownership. The lead never fixes code itself. Add useful regression coverage; run affected checks during repair. Rerun the complete required gate whenever edits make its evidence stale, then obtain a fresh review of the final state. Close findings only with verification.
 
-Keep at most three cumulative repair rounds; stop earlier for oscillation or a finding unresolved after two attempts without measurable progress. Also stop for missing material decisions, authorization, required infrastructure/checks, model/subagent capability, or conflicting requirements. Persist unresolved findings and an exact next action; never portray partial work as PASS.
+One repair round addresses the confirmed finding set from a review, runs the required verification, and ends with the next independent review. Multiple worker launches, subtasks, or parallel repairs within that cycle count as one round. Initial BUILD and its first review do not count as a repair round. Increment and persist the cumulative count when a new repair round starts, recording its ID, finding IDs, and in-progress status; a resumed unfinished round keeps its ID and is not counted again. Track per-finding attempts separately from worker launches, recording the attempted remedy and verification outcome.
+
+Keep at most three cumulative repair rounds; stop earlier for oscillation or a finding unresolved after two attempts without measurable progress. After each review, evaluate PASS before the repair limit: a successful third round still returns PASS. Also stop for missing material decisions, authorization, required infrastructure/checks, model/subagent capability, or conflicting requirements. Persist unresolved findings and an exact next action; never portray partial work as PASS.
 
 The final response starts with `ASTRASPECLOOP PASS` only when every requirement, criterion, and required check passes on the current state, with complete evidence and no known regression, unresolved correctness/safety finding, blocker, or unapproved scope change. Otherwise start with `ASTRASPECLOOP BLOCKED`.
 

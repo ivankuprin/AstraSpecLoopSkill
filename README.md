@@ -1,5 +1,7 @@
 # AstraSpecLoopSkill
 
+Current version: **1.0.1**.
+
 `AstraSpecLoop` is a bounded `DISCOVER → SPEC → BUILD → REVIEW → REPAIR` workflow for Codex. Astra Low acts as the technical lead, while Luna Max handles repository research, implementation, repairs, and independent review.
 
 The lead receives a compact JSON map from the research worker, studies only the relevant code, writes the specification, and decomposes the work. Luna workers then make the code and test changes. Astra evaluates the evidence, routes repairs, and accepts the final result only when the required checks pass.
@@ -46,6 +48,8 @@ Use $astraspecloop to fix this bug until every required check passes or progress
 5. **REPAIR:** Astra triages findings and dispatches Luna workers for bounded repair rounds.
 
 The workflow preserves a task record under `specs/<task-slug>.md`, keeps repair limits cumulative across resumed sessions, and avoids copying large source files or logs into the lead context.
+
+The lead saves state after every phase and repair round. Discovery and review workers may write only their assigned report; with a fully read-only filesystem, they return JSON for the lead to save. One repair round includes the finding set, its fixes, verification, and the next independent review, regardless of worker count. Interrupted rounds resume without consuming another round, and a successful third round still returns PASS.
 
 ## Verdicts
 
