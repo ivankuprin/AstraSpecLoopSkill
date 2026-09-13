@@ -1,17 +1,17 @@
 # AstraSpecLoopSkill
 
-Current version: **1.2.0**.
+Current version: **1.2.1**.
 
-A bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR workflow for Codex. **Astra Low is exclusively the team lead; Luna High performs all project code work.**
+A bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR workflow for Codex. **Astra Low is exclusively the team lead; Luna xHigh performs all project code work.**
 
 ## Roles
 
 - **Astra Low (`gpt-6-astra`, low reasoning):** reads compact worker reports, plans, divides tasks, dispatches workers, and decides from reported evidence. It does not search, read, or write project code, tests, diffs, configuration, or raw logs.
-- **Luna High (`gpt-5.6-luna`, high reasoning):** researches, reads and writes code, runs checks, computes fingerprints, reviews changes, and repairs findings.
+- **Luna xHigh (`gpt-5.6-luna`, xhigh reasoning):** researches, reads and writes code, runs checks, computes fingerprints, reviews changes, and repairs findings.
 
 Astra may read required host/skill instructions and maintain its own plans and workflow records. Code pointers in reports are for subsequent Luna tasks, not for Astra to open.
 
-Select Astra Low for the calling task; the skill cannot switch it automatically. Every new worker explicitly requests Luna High with `fork_turns: "none"`. Missing required capabilities produce BLOCKED rather than silent model substitution.
+Select Astra Low for the calling task; the skill cannot switch it automatically. Every new worker explicitly requests Luna xHigh with `fork_turns: "none"`. Missing required capabilities produce BLOCKED rather than silent model substitution.
 
 ## Workflow
 

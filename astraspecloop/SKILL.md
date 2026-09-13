@@ -1,9 +1,9 @@
 ---
 name: astraspecloop
-description: "Astra Low coordinates solely from Luna High reports; Luna reads, implements, reviews, and repairs code in a bounded SpecLoop. Use for AstraSpecLoop or this division of roles."
+description: "Astra Low coordinates solely from Luna xHigh reports; Luna reads, implements, reviews, and repairs code in a bounded SpecLoop. Use for AstraSpecLoop or this division of roles."
 metadata:
-  version: "1.2.0"
-  short-description: "Astra Low leads; Luna High builds and reviews"
+  version: "1.2.1"
+  short-description: "Astra Low leads; Luna xHigh builds and reviews"
 ---
 
 # AstraSpecLoop
@@ -13,7 +13,7 @@ Deliver DISCOVER → SPEC → BUILD → REVIEW → REPAIR until verified or bloc
 ## Roles and scope
 
 - Lead: `gpt-6-astra`, reasoning `low`; decisions, plans, decomposition, dispatch, and acceptance based ONLY on compact Luna reports and user requirements. Astra MUST NOT search, open, read, or write project source, tests, diffs, manifests, migrations, configuration, or raw logs, including through tools or code excerpts in reports. All code inspection, verification, commands, and fingerprints belong to Luna. Astra may read required host/skill instructions and read/write its own plans and workflow records; this exception never permits inspecting project implementation.
-- All workers: `gpt-5.6-luna`, reasoning `high`. For `collaboration.spawn_agent`, explicitly set `model: "gpt-5.6-luna"`, `reasoning_effort: "high"`, and `fork_turns: "none"`. Do not create user-visible tasks or let workers spawn agents.
+- All workers: `gpt-5.6-luna`, reasoning `xhigh`. For `collaboration.spawn_agent`, explicitly set `model: "gpt-5.6-luna"`, `reasoning_effort: "xhigh"`, and `fork_turns: "none"`. Do not create user-visible tasks or let workers spawn agents.
 - The skill cannot switch the calling model. Verify exposed settings; on mismatch request Astra Low. If settings are hidden, disclose the verification limitation. Unavailable required models or delegation means BLOCKED, without silent substitution.
 - Higher-priority instructions prevail. Preserve user changes and agreed scope; never weaken requirements or checks for PASS. Existing authorization persists; external/destructive actions, commits, pushes, merges, and publishing require authorization.
 
