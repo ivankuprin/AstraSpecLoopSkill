@@ -1,95 +1,52 @@
 ---
 name: astraspecloop
-description: "AstraSpecLoop: bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR with Astra Low as lead and Luna Max research, implementation, and review workers. Use when the user requests AstraSpecLoop or this division of agent roles."
+description: "Astra Low leads a bounded SpecLoop with Luna Max research, build, and review workers. Use for AstraSpecLoop or this requested division of agent roles."
 metadata:
-  version: "1.0.1"
+  version: "1.1.0"
   short-description: "Astra Low leads; Luna Max builds and reviews"
 ---
 
 # AstraSpecLoop
 
-Deliver verified changes using the SpecLoop workflow, with inexpensive worker discovery and implementation and focused lead reasoning.
+Deliver DISCOVER → SPEC → BUILD → REVIEW → REPAIR until verified or blocked.
 
-## Roles and model contract
+## Roles and scope
 
-- Lead: `gpt-6-astra`, reasoning `low`. Own scope, targeted code inspection, specification, task decomposition, dispatch, finding triage, and final acceptance. The lead may write the spec and loop records, but must not write or patch implementation code, tests, migrations, or project configuration; delegate those edits to Luna.
-- Every research, build, repair, and review worker: `gpt-5.6-luna`, reasoning `max`.
-- A skill is instructions, not a model switch. The calling task must already use Astra Low. Verify settings when exposed; never claim they were changed by reading this file. If the host reports a mismatch, ask the user to select Astra Low before executing the workflow. If settings are not exposed, disclose that they cannot be verified instead of inventing confirmation.
-- Use the host's subagent API, not user-visible new tasks. With `collaboration.spawn_agent`, explicitly set `model: "gpt-5.6-luna"`, `reasoning_effort: "max"`, and `fork_turns: "none"`. Full-history forks cannot apply model overrides and defeat the context-saving design.
-- Give each worker a self-contained brief: repo root, user objective, applicable constraints, owned scope, spec/record paths, relevant evidence pointers, expected output, and validation obligations. Workers must read applicable repository instructions. Do not forward the whole lead conversation.
-- If exact models, effort settings, or subagent execution are unavailable, report BLOCKED with the required setup; do not silently substitute models or implement as the lead. Workers must not spawn additional workers; the lead controls the budget and ownership.
+- Lead: `gpt-6-astra`, reasoning `low`; scope, targeted inspection, specification, decomposition, dispatch, triage, acceptance. Only Luna edits implementation, tests, migrations, and project configuration; Astra may write workflow records.
+- All workers: `gpt-5.6-luna`, reasoning `max`. For `collaboration.spawn_agent`, set `model`, `reasoning_effort`, and `fork_turns: "none"` explicitly. Do not create user-visible tasks or let workers spawn agents.
+- The skill cannot switch the calling model. Verify exposed settings; on mismatch request Astra Low. If settings are hidden, disclose the verification limitation. Unavailable required models or delegation means BLOCKED, without silent substitution.
+- Higher-priority instructions prevail. Preserve user changes and agreed scope; never weaken requirements or checks for PASS. Existing authorization persists; external/destructive actions, commits, pushes, merges, and publishing require authorization.
 
-## Scope and persistence
+## DISCOVER
 
-User, repository, host, and safety instructions override this skill. Preserve unrelated changes. Never weaken the spec, tests, or required checks to obtain PASS. Existing user authorization persists; do not ask for it again. Do not commit, push, merge, deploy, publish, or perform destructive/external actions without authorization.
+Astra locates the root and applicable top-level instructions, then delegates primary exploration to one Luna. Before first dispatch, read [worker-contracts.md](references/worker-contracts.md); reuse it without rereading. Send only the worker's role-specific contract and task context, never the full conversation or all workflow instructions.
 
-Default record: `specs/<task-slug>.md`, containing `SPEC`, `EVIDENCE`, `REVIEW`, and `LOOP`. Store machine-readable worker reports beside it under `specs/<task-slug>/`; use another repository-approved location when required. Records contain the baseline revision, relevant project-state and spec fingerprints, check plan, phase, cumulative repair count, per-finding attempts/outcomes, and result paths. Avoid unrelated generated artifacts.
+Luna returns a compact JSON map of symbols, callers, instructions, checks, risks, and unknowns. Stop discovery when entry points, affected contracts, and verification options support a plan; continue only for a named gap. Astra validates important claims with targeted inspection. Missing evidence is unknown, not proof of absence; delegate focused follow-up searches instead of repeating broad research.
 
-After every phase and repair round, the lead persists the phase, spec and relevant project-state fingerprints, baseline revision, check plan and results, cumulative repair count, per-finding attempts/outcomes, and report paths before advancing. Record pending work before a pause or handoff; never mark unfinished checks as passed.
+## SPEC
 
-On resume, compare spec, relevant working-tree state, and required-check plan against the record. Invalidate stale evidence and reviews. Repair limits remain cumulative across sessions. Strict mode uses separate spec/evidence/review/loop files and fingerprints covering the baseline, spec, relevant diff, and required-check plan; independent reviewer context is mandatory.
+Save `specs/<task-slug>.md` with SPEC, EVIDENCE, REVIEW, and LOOP sections, and reports in `specs/<task-slug>/`, unless the repository requires another location. Record the original request and accepted clarifications, current/desired behavior, scope, assumptions, stable requirement IDs, failure cases, acceptance criteria, and required/optional checks derived from project evidence.
 
-## 1. DISCOVER — Luna maps the code
+Use conservative non-material assumptions; ask for material missing decisions. Pause before BUILD when requested or necessary. Changes to agreed behavior require approval and invalidate affected evidence.
 
-The lead only locates the root, reads applicable top-level instructions, and establishes task scope before dispatch. Delegate primary repository exploration to one read-only Luna worker. Do not first load broad code trees, full manifests, logs, or large diffs into the lead context.
+Assign tasks with dependencies, file ownership, acceptance checks, and shared interface contracts. Batch small related work. Parallelize only independent changes with compatible contracts and disjoint write ownership; serialize shared edits and delegate integration checks.
 
-Ask Luna to locate implementation entry points, relevant symbols and callers, tests, manifests/CI check commands, existing changes, and uncertainty. Luna saves a valid JSON report and returns its path plus a short summary. The structure below is a starting point: omit irrelevant fields and add task-specific fields when useful.
+## BUILD
 
-For discovery and review workers, read-only means no changes to project code, tests, configuration, the shared specification, or loop records. The lead explicitly assigns a unique report path under the task's report directory; the worker may create or update only its own report there. If the host enforces a fully read-only filesystem, return the compact JSON directly and let the lead save it.
+Luna makes minimal changes and runs affected checks with meaningful tests when warranted. Reuse the same worker for related follow-ups and repairs while its context remains useful; give changed scope/state explicitly. Replace it when unavailable or unsuitable. Reports map requirements to changes and observed checks. Astra inspects relevant diff slices and delegates integration edits.
 
-```json
-{
-  "objective": "requested behavior",
-  "baseline": {"revision": "...", "existing_changes": []},
-  "instructions": [{"path": "AGENTS.md", "constraints": ["..."]}],
-  "locations": [
-    {"path": "src/example.ts", "symbol": "example", "lines": [10, 45],
-     "role": "entry point", "relevance": "why inspect", "related": []}
-  ],
-  "behavior": {"current": "...", "desired": "..."},
-  "checks": [{"command": "...", "cwd": ".", "source": "package.json:scripts.test", "coverage": "...", "required": true}],
-  "risks": [],
-  "unknowns": [{"question": "...", "next_search": "..."}],
-  "suggested_scope": [],
-  "searched": ["directories/symbols inspected"],
-  "not_searched": ["relevant coverage gaps"]
-}
-```
+Do not duplicate running commands or repeat successful checks without stale evidence or a concrete concern. Once all writers finish, run the complete required gate against stable project state; keep writers stopped through final review. Subsequent changes invalidate affected checks and review.
 
-Target a compact report, normally 2–4 KB; this is guidance, not a truncation rule for critical facts. Include pointers and findings, not copied files or raw logs. Separate observed facts from inference. A missing item is unknown, not proof of absence.
+## REVIEW → REPAIR
 
-The lead reads the JSON, then inspects only the code slices and instruction files necessary to validate the design. Confirm important claims against actual code and check adjacent callers/contracts when warranted. Treat the report as a search map, not exhaustive truth. If a concrete gap appears, send a focused follow-up to Luna; do not repeat broad discovery or launch speculative completeness audits.
+Always use a fresh read-only Luna reviewer. Supply the original request, accepted clarifications, spec, actual state, and check evidence. Review both spec completeness and implementation, including relevant adjacent contracts; fresh context is not proof against shared model blind spots. Astra validates findings and records reasons for rejecting unsupported ones.
 
-## 2. SPEC — Astra plans
+For confirmed findings, read [state-and-repair.md](references/state-and-repair.md) before repairs. Delegate fixes, rerun stale required checks, and obtain fresh independent review. Maximum three cumulative repair rounds; stop earlier for oscillation or two unsuccessful attempts on a finding without progress. Evaluate PASS before the limit, including after round three.
 
-Based on targeted code inspection, reuse a matching spec or save the objective, current/desired behavior, scope and non-goals, assumptions, stable requirement IDs, edge/failure behavior, acceptance criteria, verification commands, and done criteria before BUILD.
+## State and verdict
 
-Make conservative non-material assumptions autonomously. Ask only for missing material decisions or authorization. Pause before BUILD if the user requested plan approval. Material changes to agreed behavior require approval and invalidate review.
+After every phase and round, save phase, baseline, spec/project/check-plan fingerprints, results, report paths, repair count, and pending work. Update compact current state; keep detailed history in reports. Read the state reference on resume or for strict mode; invalidate stale evidence before continuing.
 
-Decompose into coherent tasks with IDs, dependencies, owned files/areas, required behavior, and acceptance checks. Choose one Luna per task, or batch tightly related small tasks into one worker. Parallelize only independent tasks with disjoint write ownership, bounded by available slots. Serialize edits to shared files and integration work. Do not invent task granularity merely to create more agents.
+Return `ASTRASPECLOOP PASS` only when all requirements, criteria, and required checks pass on the current state, with complete evidence and no unresolved blocker, correctness/safety finding, known regression, or unapproved scope change. Otherwise return `ASTRASPECLOOP BLOCKED` for exhausted repairs or unavailable decisions, authorization, capabilities, infrastructure, checks, or conflicting requirements.
 
-## 3. BUILD — Luna implements
-
-Dispatch Luna with the saved spec and precise task brief. Require minimal coherent edits, preservation of user changes, meaningful tests when warranted, and affected checks. Workers must flag scope changes or conflicting edits instead of overriding them.
-
-Worker reports are compact JSON with task ID, status, changed paths/symbols, requirement-to-change mapping, checks (command, exit status, result/log path), risks, and blockers. Large logs remain on disk. Report blocked or incomplete work honestly. The lead inspects relevant diff slices and results, updates records, and dispatches any integration edits to Luna.
-
-During development run affected checks only. Do not duplicate a running command or repeat successful checks without new changes or unresolved concerns. Run the complete required gate once implementation is ready for review; delegate command execution and report collection to Luna when helpful.
-
-## 4. REVIEW — fresh Luna, Astra acceptance
-
-Use a fresh read-only Luna reviewer with `fork_turns: "none"`, the exact worker model settings, the spec, baseline/current-state pointers, and check evidence. Do not use the implementer's context as independent review. Reviewer inspects actual code/diff from disk, verifies evidence against current state, and marks each requirement and criterion PASS, FAIL, or BLOCKED.
-
-Return compact JSON containing requirement statuses and findings with stable ID, severity, path/symbol/line, evidence, concrete remedy, and closing verification. Never output whole source files. The lead validates actionable findings with focused inspection, rejects unsupported claims with recorded reasons, and makes the final acceptance decision. Independent review is required for this workflow; if unavailable, report BLOCKED.
-
-## 5. REPAIR and stopping
-
-Assign confirmed findings and their direct consequences to Luna workers, preserving file ownership. The lead never fixes code itself. Add useful regression coverage; run affected checks during repair. Rerun the complete required gate whenever edits make its evidence stale, then obtain a fresh review of the final state. Close findings only with verification.
-
-One repair round addresses the confirmed finding set from a review, runs the required verification, and ends with the next independent review. Multiple worker launches, subtasks, or parallel repairs within that cycle count as one round. Initial BUILD and its first review do not count as a repair round. Increment and persist the cumulative count when a new repair round starts, recording its ID, finding IDs, and in-progress status; a resumed unfinished round keeps its ID and is not counted again. Track per-finding attempts separately from worker launches, recording the attempted remedy and verification outcome.
-
-Keep at most three cumulative repair rounds; stop earlier for oscillation or a finding unresolved after two attempts without measurable progress. After each review, evaluate PASS before the repair limit: a successful third round still returns PASS. Also stop for missing material decisions, authorization, required infrastructure/checks, model/subagent capability, or conflicting requirements. Persist unresolved findings and an exact next action; never portray partial work as PASS.
-
-The final response starts with `ASTRASPECLOOP PASS` only when every requirement, criterion, and required check passes on the current state, with complete evidence and no known regression, unresolved correctness/safety finding, blocker, or unapproved scope change. Otherwise start with `ASTRASPECLOOP BLOCKED`.
-
-Keep the final report concise: outcome, record path, cumulative repair count, reviewer isolation, actual/verified model settings (or verification limitation), required-check results, and any exact next action. Follow the host's communication requirements; avoid narrating routine tool calls.
+Final report: outcome, record path, repair count, reviewer isolation, model verification limitations, required-check results, and exact next action if blocked.

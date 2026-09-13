@@ -1,6 +1,10 @@
 # AstraSpecLoopSkill
 
-Current version: **1.0.1**.
+Current version: **1.1.0**.
+
+The core skill is 692 words, down from 1,501 in v1.0.1. Worker contracts and resume/repair details live in references loaded when needed. This reduces entrypoint instructions, not a measured percentage of task token costs.
+
+Version 1.1.0 reuses implementation workers for related repairs, gives independent reviewers the original request to check specification completeness, defines shared contracts before parallel work, and ties reports to project state. Final verification and review run after writers finish.
 
 `AstraSpecLoop` is a bounded `DISCOVER → SPEC → BUILD → REVIEW → REPAIR` workflow for Codex. Astra Low acts as the technical lead, while Luna Max handles repository research, implementation, repairs, and independent review.
 
