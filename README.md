@@ -1,25 +1,25 @@
 # AstraSpecLoopSkill
 
-Current version: **1.2.2**.
+Current version: **1.3.0**.
 
-A bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR workflow for Codex. **Astra Low is exclusively the team lead; Luna xHigh performs all project code work.**
+A bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR workflow for Codex. **Your selected main model acts exclusively as team lead; Luna xHigh performs all project code work.**
 
 ## Roles
 
-- **Astra Low (`gpt-6-astra`, low reasoning):** reads compact worker reports, plans, divides tasks, dispatches workers, and decides from reported evidence. It does not search, read, or write project code, tests, diffs, configuration, or raw logs.
+- **Team lead (your selected main model and reasoning effort):** reads compact worker reports, plans, divides tasks, dispatches workers, and decides from reported evidence. It does not search, read, or write project code, tests, diffs, configuration, or raw logs.
 - **Luna xHigh (`gpt-5.6-luna`, xhigh reasoning):** researches, reads and writes code, runs checks, computes fingerprints, reviews changes, and repairs findings.
 
-Astra may read required host/skill instructions and maintain its own plans and workflow records. Code pointers in reports are for subsequent Luna tasks, not for Astra to open.
+The lead may read required host/skill instructions and maintain its own plans and workflow records. Code pointers in reports are for subsequent Luna tasks, not for the lead to open.
 
-Select Astra Low for the calling task; the skill cannot switch it automatically. Every new worker explicitly requests Luna xHigh with `fork_turns: "none"`. Missing required capabilities produce BLOCKED rather than silent model substitution.
+Select any available main model and reasoning effort for the calling task. The skill preserves that choice, including when the main model is Luna; no the lead requirement or main-model mismatch check applies. Every new worker explicitly requests Luna xHigh with `fork_turns: "none"`. Missing required capabilities produce BLOCKED rather than silent model substitution.
 
 ## Workflow
 
 1. **DISCOVER:** Luna explores the repository and reports behavior, locations, constraints, risks, and verification options.
-2. **SPEC:** Astra plans exclusively from reports. Missing information triggers a focused Luna follow-up. A request for a plan only stops at the plan.
-3. **BUILD:** Luna workers implement coherent subtasks and run relevant checks. Astra can batch small tasks or coordinate independent tasks with compatible interfaces and disjoint write ownership.
+2. **SPEC:** the lead plans exclusively from reports. Missing information triggers a focused Luna follow-up. A request for a plan only stops at the plan.
+3. **BUILD:** Luna workers implement coherent subtasks and run relevant checks. the lead can batch small tasks or coordinate independent tasks with compatible interfaces and disjoint write ownership.
 4. **REVIEW:** a fresh Luna reviews all active changes against the original request and specification, focusing on relevant risks such as races, transactions, validation, and error handling.
-5. **REPAIR:** the reviewer that found the problem fixes it after Astra assigns the confirmed findings. A new Luna with no inherited context then reviews all active changes. The repairing reviewer cannot provide final independent acceptance of its own edits.
+5. **REPAIR:** the reviewer that found the problem fixes it after the lead assigns the confirmed findings. A new Luna with no inherited context then reviews all active changes. The repairing reviewer cannot provide final independent acceptance of its own edits.
 
 There are at most three cumulative repair rounds, with earlier stopping for oscillation or repeated attempts without progress. A successful third round still passes. Writers stop during final checks and review; stale evidence must be revalidated.
 
@@ -31,7 +31,7 @@ After parallel work, a Luna integrates changes into the designated result checko
 
 Luna reports use compact Markdown, normally 2–4 KB, with five fixed sections: **Result, Facts, Checks, Risks, Decision needed**. Reports contain conclusions and evidence pointers, never code excerpts, diffs, or raw logs.
 
-The plan lives in `specs/<task-slug>.md`; worker reports and the authoritative `state.json` live in `specs/<task-slug>/`, unless repository rules require another location. JSON is only for cycle state: phase, counters, findings, fingerprints, results, and report pointers. Astra updates it from Luna reports after each phase and round. Existing history and counters survive resume.
+The plan lives in `specs/<task-slug>.md`; worker reports and the authoritative `state.json` live in `specs/<task-slug>/`, unless repository rules require another location. JSON is only for cycle state: phase, counters, findings, fingerprints, results, and report pointers. the lead updates it from Luna reports after each phase and round. Existing history and counters survive resume.
 
 Detailed worker contracts and repair/resume rules are separate references loaded when needed. No measured token-saving percentage or guarantee of defect-free production behavior is claimed.
 
@@ -49,7 +49,7 @@ Restart Codex after installation so the skill is discovered.
 
 ## Use
 
-Choose Astra Low and invoke:
+Choose your preferred main model and reasoning effort, then invoke:
 
 ```text
 Use $astraspecloop to implement this feature through verified review and repair.
