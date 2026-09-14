@@ -1,8 +1,8 @@
 ---
 name: astraspecloop
-description: "The user-selected main model coordinates solely from Luna xHigh reports; Luna reads, implements, reviews, and repairs code in a bounded SpecLoop. Use for AstraSpecLoop or this division of roles."
+description: "The user-selected main model coordinates from Luna xHigh reports; Luna researches, implements, reviews, and repairs code in a bounded SpecLoop."
 metadata:
-  version: "1.3.0"
+  version: "1.4.2"
   short-description: "Your selected model leads; Luna xHigh works"
 ---
 
@@ -10,47 +10,42 @@ metadata:
 
 Deliver DISCOVER → SPEC → BUILD → REVIEW → REPAIR until verified or blocked.
 
-## Roles and scope
+## Roles
 
-- Lead: the user-selected model and reasoning effort of the current task. Preserve that choice, including when the lead is itself Luna. Decisions, plans, decomposition, dispatch, and acceptance use ONLY compact worker reports and user requirements. The lead MUST NOT search, open, read, or write project source, tests, diffs, manifests, migrations, configuration, or raw logs, including through tools or code excerpts in reports. All code inspection, verification, commands, and fingerprints belong to Luna workers. The lead may read required host/skill instructions and read/write its own plans and workflow records; this exception never permits inspecting project implementation.
-- All workers: `gpt-5.6-luna`, reasoning `xhigh`. For `collaboration.spawn_agent`, explicitly set `model: "gpt-5.6-luna"`, `reasoning_effort: "xhigh"`, and `fork_turns: "none"`. Do not create user-visible tasks or let workers spawn agents.
-- Do not require a particular lead model/effort, request a main-model switch, or block because the lead settings are different or hidden. The exact model contract applies only to workers: unavailable Luna xHigh or delegation means BLOCKED, without silent substitution. A change of lead never changes the worker settings or role boundaries.
-- Higher-priority instructions prevail. Preserve user changes and agreed scope; never weaken requirements or checks for PASS. Existing authorization persists; external/destructive actions, commits, pushes, merges, and publishing require authorization.
+The lead keeps the user's selected model and reasoning effort, including when it is Luna. It decides from user requirements and compact worker reports only. It must not search, read, or write project code, tests, diffs, configuration, or raw logs. Luna performs project inspection, commands, changes, and fingerprints. The lead may read required host/skill instructions and maintain its plans and workflow records.
 
-## DISCOVER
+Every worker uses `gpt-5.6-luna`, `reasoning_effort: "xhigh"`, `fork_turns: "none"`. Do not create user-visible tasks or allow worker delegation. Missing worker capabilities means BLOCKED; never block merely because the main model differs or is hidden.
 
-The lead passes the provided working directory to Luna, which locates the root and applicable repository instructions. Before first dispatch, read [worker-contracts.md](references/worker-contracts.md); reuse it without rereading. Send only the role-specific contract and task context, never the conversation or all workflow instructions. Do not run preliminary repository searches as lead.
+Preserve user changes, accepted scope, and authorization boundaries. Never weaken checks for PASS. Higher-priority instructions prevail; commits, pushes, merges, publishing, and destructive/external actions require authorization.
 
-Luna returns compact Markdown describing behavior, symbols, callers, constraints, checks, risks, and unknowns without code excerpts. Stop once planning is supported. the lead plans from that report; pointers are for subsequent Luna tasks, never for the lead to open. Resolve gaps or disputed claims through focused Luna follow-ups or an independent Luna assessment. Missing evidence is unknown, not proof of absence.
+## DISCOVER → SPEC
 
-## SPEC
+Read [worker-contracts.md](references/worker-contracts.md) before first dispatch. Send the working directory, relevant task context, and only the applicable worker contract. Luna locates instructions and implementation; the lead performs no preliminary repository search.
 
-Save `specs/<task-slug>.md` with SPEC, EVIDENCE, REVIEW, and a LOOP state pointer. Store worker `.md` reports and authoritative `state.json` in `specs/<task-slug>/`, unless the repository requires another location. Record the original request and accepted clarifications, current/desired behavior, scope, assumptions, stable requirement IDs, failure cases, acceptance criteria, and required/optional checks derived from project evidence.
+Require an observable stopping criterion: enough entry points, behavior, contracts, constraints, and verification options to plan. Unknowns trigger focused follow-ups, not repeated broad discovery.
 
-Use conservative non-material assumptions; ask for material missing decisions. Pause before BUILD when requested or necessary. Changes to agreed behavior require approval and invalidate affected evidence.
+Save `specs/<task>.md` with the request, accepted clarifications, requirement IDs, scope, assumptions, acceptance criteria, and check plan. Keep worker Markdown reports and authoritative `state.json` in `specs/<task>/`, or the repository-approved location. Plan-only requests stop with a plan, without implementation PASS.
 
-If the user requested only a plan, deliver that plan and stop; do not implement or claim an implementation PASS.
+Honor requested approval checkpoints before dependent work. Material changes to agreed behavior or scope require a user decision and invalidate affected acceptance/review evidence. Make conservative non-material assumptions without adding approval steps or asking again for authorization already given.
 
-Assign tasks with dependencies, file ownership, acceptance checks, and shared interface contracts. Batch small related work. Parallelize only independent changes with compatible contracts and disjoint write ownership; serialize shared edits and delegate integration checks.
+Luna records the starting state, pre-existing changes, and task-owned changes. Review scope is ALL changes produced for this task, including integrated work and repairs. Inspect surrounding or pre-existing code only for relevant interactions; do not audit or repair unrelated changes. If attribution is unclear, Luna resolves it before review.
 
-When concurrent project writes are actually worthwhile, delegate separate Git worktree setup to Luna for each writer; follow the worktree contract in the worker reference. Sequential work and read-only review need no extra worktree. If isolation or integration cannot be established safely, serialize the work instead.
+Assign coherent tasks, file ownership, shared interfaces, and completion checks; batch small related work. Default to sequential writes. Only when parallel writes are worthwhile, read [parallel-worktrees.md](references/parallel-worktrees.md).
 
-## BUILD
+## BUILD → REVIEW → REPAIR
 
-Luna makes minimal changes and runs affected checks with meaningful tests. Reuse builders for unfinished assigned work, not fixes discovered by reviewers. Reports map requirements to observed changes/checks. the lead decides from reports and delegates every integration inspection or edit.
+Luna implements and runs meaningful affected checks. Reuse builders for unfinished work. Stop writers before final validation. Existing full-gate results count if Luna confirms identical relevant code, dependencies, environment, and check plan; do not rerun them just because the phase changed. Revalidate affected evidence after changes or concrete uncertainty.
 
-Luna must not duplicate running commands or repeat valid checks without cause. After writers finish, delegate the complete required gate on stable state; freeze writes during final review. Subsequent changes invalidate affected evidence.
+Validation is local-first: green GitHub CI is not required. Luna maps required behavior and relevant environment conditions to equivalent local checks. Billing or missing hosted runs alone cannot block implementation PASS. Record hosted checks as unavailable/not run. Essential uncovered behavior still blocks; explicit hosted-CI requests and branch protection remain separate constraints, never permission to bypass them.
 
-## REVIEW → REPAIR
+Launch a NEW Luna reviewer with task requirements, verified navigation/check pointers, and concrete risk scenarios. It independently reads all task changes and relevant contracts. Findings need a trigger, consequence, code-linked reasoning or reproduction, and closing verification; speculation is a question, not a confirmed defect.
 
-Start each review with a NEW Luna, `fork_turns: "none"`. Review ALL active changes, not just the last fix, against the original request and spec. Include relevant risk focus: races, transaction boundaries, validation, error handling, compatibility, or other implementation-specific concerns. Preserve unrelated user changes. the lead assesses compact findings; unresolved factual disagreements go to Luna, never lead code inspection.
+Assign confirmed repairs to the reviewer that found them, never the original builder. After fixes, a NEW context-free reviewer verifies the whole task result. The repairer cannot independently accept its own fixes. Read [state-and-repair.md](references/state-and-repair.md) before repair, resume, or strict mode.
 
-Before repair, read [state-and-repair.md](references/state-and-repair.md). Assign confirmed fixes to THE SAME Luna that found them, never the original builder. After its fixes/checks, launch a NEW context-free reviewer of all active changes. A reviewer that edited code cannot provide final acceptance for those edits. Continue until a fresh reviewer reports no actionable findings and readiness within the agreed scope, or the bounded stopping conditions apply: three cumulative repair rounds, oscillation, or two attempts without progress. Evaluate PASS before the limit.
+## Limits and acceptance
 
-## State and verdict
+Before each assignment, record its completion criterion and attempt. Progress means evidence resolves a named gap/hypothesis, satisfies a criterion, or verifies a fix; rewording reports or repeating searches is not progress. Two consecutive attempts at the same objective without progress trigger BLOCKED in any phase. Independent subtasks are not retries. Stop oscillation. Allow three cumulative repair rounds; check PASS before the limit.
 
-After each phase/round, the lead updates `state.json` with phase, Luna-reported baseline/fingerprints, check statuses/results, report paths, repair count/round ID, finding attempts, and pending work. JSON is only for cycle state; plans and worker reports use Markdown. On resume/strict mode read the state reference and delegate state verification to Luna.
+After each phase/attempt, save compact state and evidence pointers. Bundle fingerprints with existing Luna work; never launch an agent solely for bookkeeping. Reuse unchanged fingerprints; mark unverified updates pending until the next substantive worker verifies them, before acceptance. Incomplete reports require focused correction, not speculative acceptance.
 
-Return `ASTRASPECLOOP PASS` only when all requirements, criteria, and required checks pass on the current state, with complete evidence and no unresolved blocker, correctness/safety finding, known regression, or unapproved scope change. Otherwise return `ASTRASPECLOOP BLOCKED` for exhausted repairs or unavailable decisions, authorization, capabilities, infrastructure, checks, or conflicting requirements.
-
-Final report: outcome, record path, repair count, reviewer isolation, model verification limitations, required-check results, and exact next action if blocked.
+Return `ASTRASPECLOOP PASS` only with complete current evidence, all requirements/checks passed, fresh clean review, and no unresolved task defect or blocker. Otherwise report `ASTRASPECLOOP BLOCKED` with the specific reason. Final: outcome, record path, repair count, reviewer isolation, check results, limitations, and next action if blocked.

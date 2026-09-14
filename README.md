@@ -1,6 +1,6 @@
 # AstraSpecLoopSkill
 
-Current version: **1.3.0**.
+Current version: **1.4.2**.
 
 A bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR workflow for Codex. **Your selected main model acts exclusively as team lead; Luna xHigh performs all project code work.**
 
@@ -11,17 +11,25 @@ A bounded DISCOVER → SPEC → BUILD → REVIEW → REPAIR workflow for Codex. 
 
 The lead may read required host/skill instructions and maintain its own plans and workflow records. Code pointers in reports are for subsequent Luna tasks, not for the lead to open.
 
-Select any available main model and reasoning effort for the calling task. The skill preserves that choice, including when the main model is Luna; no the lead requirement or main-model mismatch check applies. Every new worker explicitly requests Luna xHigh with `fork_turns: "none"`. Missing required capabilities produce BLOCKED rather than silent model substitution.
+Select any available main model and reasoning effort for the calling task. The skill preserves that choice, including when the main model is Luna. Every new worker explicitly requests Luna xHigh with `fork_turns: "none"`. Missing worker capabilities produce BLOCKED rather than silent substitution.
 
 ## Workflow
 
 1. **DISCOVER:** Luna explores the repository and reports behavior, locations, constraints, risks, and verification options.
 2. **SPEC:** the lead plans exclusively from reports. Missing information triggers a focused Luna follow-up. A request for a plan only stops at the plan.
-3. **BUILD:** Luna workers implement coherent subtasks and run relevant checks. the lead can batch small tasks or coordinate independent tasks with compatible interfaces and disjoint write ownership.
-4. **REVIEW:** a fresh Luna reviews all active changes against the original request and specification, focusing on relevant risks such as races, transactions, validation, and error handling.
-5. **REPAIR:** the reviewer that found the problem fixes it after the lead assigns the confirmed findings. A new Luna with no inherited context then reviews all active changes. The repairing reviewer cannot provide final independent acceptance of its own edits.
+3. **BUILD:** Luna workers implement coherent subtasks and run relevant checks. The lead can batch small tasks or coordinate independent tasks with compatible interfaces and disjoint write ownership.
+4. **REVIEW:** a fresh Luna reviews all changes produced for the task and relevant interactions, without auditing unrelated user changes. Findings need a trigger, consequence, evidence, and closing verification.
+5. **REPAIR:** the reviewer that found the problem fixes it after assignment. A new Luna reviews the entire updated task result; the repairer cannot independently accept its own fixes.
 
 There are at most three cumulative repair rounds, with earlier stopping for oscillation or repeated attempts without progress. A successful third round still passes. Writers stop during final checks and review; stale evidence must be revalidated.
+
+Every assignment has a completion criterion. Two consecutive attempts at the same objective without evidence-based progress block in any phase. Interrupted attempts retain their IDs. Requested approval checkpoints and decisions on material scope changes are respected.
+
+## Local verification
+
+Green GitHub CI is not required by default. Luna runs equivalent substantive checks locally; billing outages or missing hosted runs alone do not block implementation PASS. Unavailable hosted checks remain not run, never falsely passed. Essential uncovered behavior still blocks; explicit hosted-CI requests and branch protection remain separate constraints.
+
+Existing check results can be reused when relevant code, dependencies, environment, and check plan are confirmed unchanged. The final reviewer confirms that reviewed/tested fingerprints still match before its verdict. Known subsequent changes invalidate acceptance. Writers remain stopped through lead acceptance.
 
 ## Reports and state
  
@@ -31,9 +39,11 @@ After parallel work, a Luna integrates changes into the designated result checko
 
 Luna reports use compact Markdown, normally 2–4 KB, with five fixed sections: **Result, Facts, Checks, Risks, Decision needed**. Reports contain conclusions and evidence pointers, never code excerpts, diffs, or raw logs.
 
-The plan lives in `specs/<task-slug>.md`; worker reports and the authoritative `state.json` live in `specs/<task-slug>/`, unless repository rules require another location. JSON is only for cycle state: phase, counters, findings, fingerprints, results, and report pointers. the lead updates it from Luna reports after each phase and round. Existing history and counters survive resume.
+The plan lives in `specs/<task-slug>.md`; worker reports and the authoritative `state.json` live in `specs/<task-slug>/`, unless repository rules require another location. JSON is only for cycle state: phase, counters, findings, fingerprints, results, and report pointers. The lead updates it from Luna reports. Existing history and counters survive resume.
 
-Detailed worker contracts and repair/resume rules are separate references loaded when needed. No measured token-saving percentage or guarantee of defect-free production behavior is claimed.
+Follow-ups report only new results and remaining questions, linking unchanged evidence. Unknown locations and commands are discovered by Luna, not the lead. Fingerprints are bundled with substantive worker tasks rather than separate bookkeeping agents.
+
+Worker contracts, repair/resume rules, and conditional worktree instructions are separate references. Structural validation passed; this version has not been behaviorally benchmarked. No measured token-saving percentage or guarantee of defect-free production behavior is claimed.
 
 ## Install in Codex
 
